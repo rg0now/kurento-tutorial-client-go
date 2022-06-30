@@ -113,6 +113,35 @@ func NewStartCommunication(m map[string]interface{}) (StartCommunication, error)
 	return ret, nil
 }
 
+// --- Magic Mirror example related structures
+type MagicMirrorRequest struct {
+	Id string   `json:"id"`
+	Sdp string  `json:"sdpOffer"`
+}
+
+func (MagicMirrorRequest) Message() { return }
+
+func NewMagicMirrorRequest(sdp string) Message {
+	return MagicMirrorRequest{"start", sdp}
+}
+
+type MagicMirrorResponse struct {
+	Id string	`json:"id"`
+	Sdp string	`json:"sdpAnswer"`
+}
+
+func (MagicMirrorResponse) Message() { return }
+
+func NewMagicMirrorResponse(m map[string]interface{}) (MagicMirrorResponse, error) {
+	ret := MagicMirrorResponse{Id: m["id"].(string),
+		Sdp: m["sdpAnswer"].(string)}
+	if m["id"].(string) != "startResponse" {
+		return ret, errors.New("expected message: startResponse")
+	}
+	return ret, nil
+}
+// --------------
+
 // ICE
 type ICECandidate struct {
 	Id string				`json:"id"`

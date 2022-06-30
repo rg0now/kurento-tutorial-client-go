@@ -20,7 +20,7 @@ import (
 	"github.com/pion/webrtc/v3/pkg/media/ivfreader"
 	"github.com/pion/webrtc/v3/pkg/media/ivfwriter"
 	"github.com/pion/webrtc/v3/pkg/media/h264reader"
-	// "github.com/pion/webrtc/v3/pkg/media/h264writer"
+	"github.com/pion/webrtc/v3/pkg/media/h264writer"
 )
 	
 // codec defs: from RegisterDefaultCodecs
@@ -238,7 +238,7 @@ func receiveVP8Track(track *webrtc.TrackRemote, peerConnection *webrtc.PeerConne
 		}
 	}()
 
-	ivfFile, err := ivfwriter.New(file)
+	ivfFile, err := ivfwriter.New(file + ".ivf")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -249,7 +249,7 @@ func receiveVP8Track(track *webrtc.TrackRemote, peerConnection *webrtc.PeerConne
 		log.Fatalln("Got Opus track: unimplemented")
 		// saveToDisk(oggFile, track)
 	} else if strings.EqualFold(codec.MimeType, webrtc.MimeTypeVP8) {
-		log.Println("Got VP8 track, saving to disk as output.ivf")
+		log.Println("Got VP8 track, saving to disk as " + file + ".ivf")
 		for {
 			rtpPacket, _, err := track.ReadRTP()
 			if err != nil {
@@ -263,7 +263,42 @@ func receiveVP8Track(track *webrtc.TrackRemote, peerConnection *webrtc.PeerConne
 }
 		
 func receiveH264Track(track *webrtc.TrackRemote, peerConnection *webrtc.PeerConnection, file string) {
-	log.Fatalln("ReceiveH264Track: Unimplemented")
+
+	// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+	go func() {
+		ticker := time.NewTicker(time.Second * 3)
+		for range ticker.C {
+			errSend := peerConnection.WriteRTCP([]rtcp.Packet{
+				&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())}})
+			if errSend != nil {
+				log.Println(errSend)
+			}
+		}
+	}()
+
+	h264File, err := h264writer.New(file + ".h264")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer h264File.Close()
+
+	codec := track.Codec()
+	if strings.EqualFold(codec.MimeType, webrtc.MimeTypeOpus) {
+		log.Fatalln("Got Opus track: unimplemented")
+		// saveToDisk(oggFile, track)
+	} else if strings.EqualFold(codec.MimeType, webrtc.MimeTypeH264) {
+		log.Println("Got H264 track, saving to disk as " + file + " .h264")
+		for {
+			rtpPacket, _, err := track.ReadRTP()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			if err := h264File.WriteRTP(rtpPacket); err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}
+
 }
 		
 		
