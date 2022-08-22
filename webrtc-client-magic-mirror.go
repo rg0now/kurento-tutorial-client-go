@@ -11,6 +11,7 @@ import (
         "context"
         "strings"
         "encoding/json"
+        "strconv"
 
         "github.com/gorilla/websocket"
         "github.com/pion/webrtc/v3"
@@ -58,6 +59,7 @@ func dumpCandidates(tr *webrtc.ICETransport) () {
 /////////////////////////
 
 func main() {
+        var pid = os.Getpid()
         state := FREE
         log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -148,8 +150,8 @@ func main() {
                 ICEServers: []webrtc.ICEServer{
                         {
                                 URLs:           []string{*stunURI},
-                                Username:       "user",
-                                Credential:     "pass",
+                                Username:       "user-1",
+                                Credential:     "pass-1",
                                 CredentialType: webrtc.ICECredentialTypePassword,
                         },
                 },
@@ -276,10 +278,10 @@ func main() {
                 }
         })
 
-        log.Printf("Starting magic mirror call.")
+        log.Printf("Starting magic mirror call with pid: " + strconv.Itoa(pid))
 
         // // Set a handler for when a new remote track starts
-        peerConnection.OnTrack(wcodec.ReceiveTrack(peerConnection, "mirrored", codec))
+        peerConnection.OnTrack(wcodec.ReceiveTrack(peerConnection, "mirrored_" + strconv.Itoa(pid), codec))
 
         // audio&video
         videoTrack, videoTrackErr := webrtc.NewTrackLocalStaticSample(
