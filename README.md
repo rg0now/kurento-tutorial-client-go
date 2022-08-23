@@ -68,6 +68,12 @@ go run webrtc-client.go caller --peer=test2 --ice-addr="${TURN_SERVER_ADDR}" --u
 go run webrtc-client.go callee --user=test2 --ice-addr="${TURN_SERVER_ADDR}" --url="wss://${APPLICATION_SERVER_ADDR}:${APPLICATION_SERVER_ADDR}/one2one" --debug -file=/tmp/output.ivf
 ```
 
+## Start magic-mirror background traffic
+Create an ivf or h264 file to be played and run the below script.
+```console
+demo/run-mirror-traffic.sh -n <NUMBER_OF_CALLS> -m <MODE[rolling|static]> -f <FILE-TO-PLAY>
+```
+
 ## Help
 
 STUNner development is coordinated on Discord, send [us](https://github.com/l7mp/stunner/blob/main/AUTHORS) an email to ask an invitation.
